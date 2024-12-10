@@ -1,20 +1,18 @@
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "GET_MAPPINGS") {
-      chrome.storage.sync.get("mappings", (data) => {
-        sendResponse({ mappings: data.mappings || {} });
-      });
-      return true; // Required for async sendResponse
+let mappings = {}; // Store your mappings here (e.g., from local storage)
+
+// Listener for messages
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "GET_MAPPINGS") {
+    sendResponse({ mappings });
+  } else if (request.type === "SAVE_MAPPING") {
+    mappings[request.key] = request.value;
+    sendResponse({ success: true });
+  } else if (request.type === "REMOVE_MAPPING") {
+    if (mappings[request.key]) {
+      delete mappings[request.key];
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false });
     }
-  
-    if (message.type === "SAVE_MAPPING") {
-      chrome.storage.sync.get("mappings", (data) => {
-        const mappings = data.mappings || {};
-        mappings[message.key] = message.value; // Save key-value pair
-        chrome.storage.sync.set({ mappings }, () => {
-          sendResponse({ success: true });
-        });
-      });
-      return true; // Required for async sendResponse
-    }
-  });
-  
+  }
+});
